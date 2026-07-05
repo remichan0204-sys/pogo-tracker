@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Trainer Log</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --route-bg: #F1EEE1;
+    --card: #FFFFFF;
+    --ink: #22301F;
+    --ink-soft: #63705F;
+    --line: #DAD6C4;
+    --grass: #2F6B4A;
+    --grass-deep: #204A34;
+    --berry: #C1443A;
+    --sky: #3E7CA6;
+    --gold: #C98A1E;
+    --gold-bg: #FBF0D9;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--route-bg);
+    color: var(--ink);
+    font-family: 'Inter', -apple-system, sans-serif;
+    padding-bottom: 4rem;
+  }
+  h1, h2, .brand { font-family: 'Fredoka', sans-serif; }
+
+  header {
+    position: relative;
+    background: var(--grass);
+    color: #fff;
+    padding: 2.25rem 1.5rem 2rem;
+  }
+  header::after {
+    content: "";
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    height: 6px;
+    background: var(--grass-deep);
+  }
+  .brand { font-size: 1.6rem; font-weight: 600; margin: 0; }
+  header p { margin: 0.4rem 0 0; color: rgba(255,255,255,0.85); font-size: 0.9rem; max-width: 34rem; }
+
+  main { max-width: 780px; margin: 0 auto; padding: 1.5rem; }
+
+  .sync-bar {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .sync-bar .status { font-size: 0.85rem; color: var(--ink-soft); width: 100%; }
+  .sync-bar .status strong { color: var(--grass); }
+  .sync-bar input { flex: 1; min-width: 140px; }
+
+  .notice {
+    background: var(--gold-bg);
+    border: 1px solid #E7CE97;
+    color: var(--gold);
+    font-size: 0.82rem;
+    padding: 0.7rem 1rem;
+    border-radius: 10px;
+    margin-bottom: 1.5rem;
+  }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 1.3rem;
+    margin-bottom: 1.5rem;
+  }
+  .card h2 { margin: 0 0 1rem; font-size: 1.05rem; font-weight: 600; color: var(--grass-deep); }
+
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; }
+  .form-grid .full { grid-column: 1 / -1; }
+  label { display: block; font-size: 0.78rem; color: var(--ink-soft); margin-bottom: 0.3rem; font-weight: 500; }
+  input, select {
+    width: 100%;
+    padding: 0.6rem 0.7rem;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    font-size: 0.95rem;
+    background: #FDFCF8;
+    color: var(--ink);
+    font-family: inherit;
+  }
+  input:focus, select:focus {
+    outline: none;
+    border-color: var(--grass);
+    box-shadow: 0 0 0 3px rgba(47,107,74,0.12);
+  }
+
+  button { cursor: pointer; border: none; border-radius: 8px; font-size: 0.9rem; font-weight: 600; font-family: inherit; }
+  .btn-primary { background: var(--berry); color: #fff; padding: 0.7rem 1.4rem; margin-top: 1.1rem; }
+  .btn-primary:hover { background: #A6392F; }
+  .btn-secondary { background: transparent; border: 1px solid var(--line); color: var(--ink-soft); padding: 0.55rem 1rem; }
+  .btn-secondary:hover { border-color: var(--sky); color: var(--sky); }
+
+  .accounts-list { display: flex; flex-direction: column; gap: 0.7rem; }
+
+  .account-card {
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--grass);
+    border-radius: 10px;
+    background: #FDFCF8;
+    overflow: hidden;
+  }
+  .account-summary {
+    padding: 0.9rem 1.1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    gap: 0.75rem;
+  }
+  .account-summary .name { font-weight: 600; font-size: 1.05rem; font-family: 'Fredoka', sans-serif; }
+  .account-summary .pass-preview {
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+    font-family: monospace;
+    letter-spacing: 0.05em;
+  }
+  .chevron { color: var(--ink-soft); transition: transform 0.15s ease; font-size: 0.85rem; }
+  .account-card.open .chevron { transform: rotate(90deg); }
+
+  .account-detail {
+    display: none;
+    padding: 0 1.1rem 1.1rem;
+    border-top: 1px solid var(--line);
+  }
+  .account-card.open .account-detail { display: block; }
+
+  .detail-top {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    padding: 1rem 0;
+  }
+  .avatar {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: var(--gold-bg);
+    border: 2px solid var(--line);
+    flex-shrink: 0;
+  }
+  .avatar-placeholder {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: var(--gold-bg);
+    border: 2px solid var(--line);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--gold);
+    font-family: 'Fredoka', sans-serif;
+    font-weight: 600;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+  }
+  .trainer-id { font-size: 0.85rem; color: var(--ink-soft); font-family: monospace; }
+
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.6rem;
+    margin-bottom: 1rem;
+  }
+  .stat {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 0.6rem 0.7rem;
+    text-align: center;
+  }
+  .stat .num { font-size: 1.1rem; font-weight: 600; color: var(--grass-deep); font-family: 'Fredoka', sans-serif; }
+  .stat .lbl { font-size: 0.72rem; color: var(--ink-soft); margin-top: 0.15rem; }
+
+  .coin-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+    padding: 0.5rem 0.7rem;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+  }
+  .coin-row input[type="checkbox"] { width: auto; accent-color: var(--grass); }
+
+  .pass-row { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem; }
+  .pass-row input { font-family: monospace; }
+  .icon-btn {
+    background: transparent;
+    border: 1px solid var(--line);
+    padding: 0.4rem 0.65rem;
+    border-radius: 7px;
+    color: var(--ink-soft);
+    font-size: 0.82rem;
+  }
+  .icon-btn:hover { border-color: var(--sky); color: var(--sky); }
+
+  .detail-actions { display: flex; gap: 0.5rem; justify-content: flex-end; }
+  .detail-actions .icon-btn.danger:hover { border-color: var(--berry); color: var(--berry); }
+
+  .empty { text-align: center; color: var(--ink-soft); font-size: 0.9rem; padding: 2rem 0; }
+</style>
+</head>
+<body>
+
+<header>
+  <p class="brand">Trainer log</p>
+  <p>Track your accounts, passes, and the shinies you're still chasing — synced across your devices.</p>
+</header>
+
+<main>
+  <div class="sync-bar">
+    <div style="flex:1; min-width:220px;">
+      <label for="sync-code">Sync code</label>
+      <input id="sync-code" placeholder="e.g. a word or PIN only you know" />
+    </div>
+    <button class="btn-secondary" id="sync-btn" style="margin-top:1.3rem;">Connect</button>
+    <div class="status" id="sync-status">Not connected — enter a sync code to save across devices.</div>
+  </div>
+
+  <div class="notice">
+    Passwords here are stored as plain text in your database — not encrypted. Fine for a casual
+    personal tracker, but anyone with your sync code or Firebase config could read them. Consider
+    a hint instead of the real password, or a proper password manager for actual login security.
+  </div>
+
+  <div class="card">
+    <h2>Add an account</h2>
+    <div class="form-grid">
+      <div>
+        <label for="in-name">Account name</label>
+        <input id="in-name" placeholder="e.g. Main, Alt 1" />
+      </div>
+      <div>
+        <label for="in-password">Password</label>
+        <input id="in-password" type="text" placeholder="password or hint" />
+      </div>
+      <div>
+        <label for="in-trainerid">Trainer ID</label>
+        <input id="in-trainerid" placeholder="e.g. 1234 5678 9012" />
+      </div>
+      <div>
+        <label for="in-photo">Photo URL (optional)</label>
+        <input id="in-photo" placeholder="paste an image link" />
+      </div>
+      <div>
+        <label for="in-shinies">Number of shinies</label>
+        <input id="in-shinies" type="number" min="0" step="1" value="0" />
+      </div>
+      <div>
+        <label for="in-passes">Premium passes</label>
+        <input id="in-passes" type="number" min="0" step="1" value="0" />
+      </div>
+    </div>
+    <button class="btn-primary" id="add-btn">Add account</button>
+  </div>
+
+  <div class="card">
+    <h2>Your accounts</h2>
+    <div class="accounts-list" id="list"></div>
+  </div>
+</main>
+
+<script type="module">
+  const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_PROJECT.firebaseapp.com",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_PROJECT.appspot.com",
+    messagingSenderId: "YOUR_SENDER_ID",
+    appId: "YOUR_APP_ID"
+  };
+
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  const LOCAL_KEY = "pogo_tracker_local_v2";
+  const CODE_KEY = "pogo_tracker_synccode_v1";
+  let accounts = [];
+  let openIndex = null;
+  let unsubscribe = null;
+
+  function loadLocal() {
+    try {
+      const raw = localStorage.getItem(LOCAL_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) { return []; }
+  }
+  function saveLocal(data) { localStorage.setItem(LOCAL_KEY, JSON.stringify(data)); }
+
+  function setStatus(text, ok) {
+    const el = document.getElementById("sync-status");
+    el.innerHTML = ok ? `<strong>${text}</strong>` : text;
+  }
+
+  function connect(code) {
+    if (unsubscribe) unsubscribe();
+    localStorage.setItem(CODE_KEY, code);
+    const ref = doc(db, "trackers", code);
+    setStatus("Connecting…", false);
+    unsubscribe = onSnapshot(ref, (snap) => {
+      if (snap.exists()) {
+        accounts = snap.data().accounts || [];
+      } else {
+        setDoc(ref, { accounts });
+      }
+      render();
+      setStatus(`Synced — code "${code}"`, true);
+    }, (err) => {
+      console.error(err);
+      setStatus("Sync error — check your Firebase config in the file.", false);
+    });
+  }
+
+  async function persist() {
+    saveLocal(accounts);
+    const code = localStorage.getItem(CODE_KEY);
+    if (code) {
+      const ref = doc(db, "trackers", code);
+      await setDoc(ref, { accounts });
+    }
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement("div");
+    div.textContent = str || "";
+    return div.innerHTML;
+  }
+
+  function initials(name) {
+    return (name || "?").trim().split(/\s+/).map(w => w[0]).join("").slice(0, 2).toUpperCase();
+  }
+
+  function render() {
+    const list = document.getElementById("list");
+    if (accounts.length === 0) {
+      list.innerHTML = '<p class="empty">No accounts yet. Add your first one above.</p>';
+      return;
+    }
+
+    list.innerHTML = accounts.map((a, i) => {
+      const isOpen = openIndex === i;
+      const avatar = a.photo
+        ? `<img class="avatar" src="${escapeHtml(a.photo)}" alt="" onerror="this.style.display='none'" />`
+        : `<div class="avatar-placeholder">${initials(a.name)}</div>`;
+
+      return `
+        <div class="account-card ${isOpen ? 'open' : ''}" data-card="${i}">
+          <div class="account-summary" data-toggle="${i}">
+            <div>
+              <div class="name">${escapeHtml(a.name)}</div>
+              <div class="pass-preview">${a.password ? '••••••••' : 'no password set'}</div>
+            </div>
+            <span class="chevron">&#9656;</span>
+          </div>
+          <div class="account-detail">
+            <div class="detail-top">
+              ${avatar}
+              <div>
+                <div class="trainer-id">Trainer ID: ${a.trainerId ? escapeHtml(a.trainerId) : '—'}</div>
+              </div>
+            </div>
+
+            <div class="pass-row">
+              <label style="margin:0; white-space:nowrap;">Password</label>
+              <input type="password" data-field="password" data-i="${i}" value="${escapeHtml(a.password)}" />
+              <button class="icon-btn" data-action="togglepw" data-i="${i}">Show</button>
+            </div>
+
+            <div class="stat-grid">
+              <div class="stat">
+                <div class="num">${a.shinies ?? 0}</div>
+                <div class="lbl">Shinies</div>
+              </div>
+              <div class="stat">
+                <div class="num">${a.passes ?? 0}</div>
+                <div class="lbl">Premium passes</div>
+              </div>
+              <div class="stat">
+                <div class="num">${a.trainerId ? escapeHtml(a.trainerId) : '—'}</div>
+                <div class="lbl">Trainer ID</div>
+              </div>
+            </div>
+
+            <label class="coin-row">
+              <input type="checkbox" data-field="coinsChecked" data-i="${i}" ${a.coinsChecked ? 'checked' : ''} />
+              Daily coins checked today
+            </label>
+
+            <div class="detail-actions">
+              <button class="icon-btn danger" data-action="delete" data-i="${i}">Delete account</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join("");
+
+    list.querySelectorAll('[data-toggle]').forEach(el => {
+      el.addEventListener("click", () => {
+        const i = Number(el.dataset.toggle);
+        openIndex = openIndex === i ? null : i;
+        render();
+      });
+    });
+
+    list.querySelectorAll('[data-action="delete"]').forEach(btn => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        accounts.splice(Number(btn.dataset.i), 1);
+        openIndex = null;
+        persist();
+        render();
+      });
+    });
+
+    list.querySelectorAll('[data-action="togglepw"]').forEach(btn => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const i = btn.dataset.i;
+        const input = list.querySelector(`input[data-field="password"][data-i="${i}"]`);
+        if (input.type === "password") { input.type = "text"; btn.textContent = "Hide"; }
+        else { input.type = "password"; btn.textContent = "Show"; }
+      });
+    });
+
+    list.querySelectorAll('input[data-field="password"]').forEach(input => {
+      input.addEventListener("click", (e) => e.stopPropagation());
+      input.addEventListener("change", () => {
+        accounts[Number(input.dataset.i)].password = input.value;
+        persist();
+      });
+    });
+
+    list.querySelectorAll('input[data-field="coinsChecked"]').forEach(input => {
+      input.addEventListener("click", (e) => e.stopPropagation());
+      input.addEventListener("change", () => {
+        accounts[Number(input.dataset.i)].coinsChecked = input.checked;
+        persist();
+      });
+    });
+  }
+
+  document.getElementById("add-btn").addEventListener("click", () => {
+    const name = document.getElementById("in-name").value.trim();
+    const password = document.getElementById("in-password").value;
+    const trainerId = document.getElementById("in-trainerid").value.trim();
+    const photo = document.getElementById("in-photo").value.trim();
+    const shinies = parseInt(document.getElementById("in-shinies").value, 10) || 0;
+    const passes = parseInt(document.getElementById("in-passes").value, 10) || 0;
+
+    if (!name) { document.getElementById("in-name").focus(); return; }
+
+    accounts.push({ name, password, trainerId, photo, shinies, passes, coinsChecked: false });
+    persist();
+
+    document.getElementById("in-name").value = "";
+    document.getElementById("in-password").value = "";
+    document.getElementById("in-trainerid").value = "";
+    document.getElementById("in-photo").value = "";
+    document.getElementById("in-shinies").value = "0";
+    document.getElementById("in-passes").value = "0";
+    render();
+  });
+
+  document.getElementById("sync-btn").addEventListener("click", () => {
+    const code = document.getElementById("sync-code").value.trim();
+    if (!code) return;
+    connect(code);
+  });
+
+  accounts = loadLocal();
+  render();
+  const savedCode = localStorage.getItem(CODE_KEY);
+  if (savedCode) {
+    document.getElementById("sync-code").value = savedCode;
+    connect(savedCode);
+  }
+</script>
+
+</body>
+</html>
